@@ -1,0 +1,12 @@
+## Interface: 80000
+## Title: AddonToolkit
+## Author: Brusalk
+## Version: 1.0.0
+## Notes: A library for addons that provides many helpful development features such as an advanced console, enhanced and isolated execution scope, unit testing, and more
+## LoadOnDemand: 1
+## X-LoggingLevel: debug
+
+# This must be FIRST
+lib/fenv.lua
+
+lib/method.lua
