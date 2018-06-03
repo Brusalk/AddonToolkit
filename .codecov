@@ -1,0 +1,10 @@
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1 # Allow coverage to drop by 1% for sanity's sake
