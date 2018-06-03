@@ -16,7 +16,7 @@ end
 
 
 function AddonNamespaceMetatable:__newindex(key, value)
-  error(format("Leaking Global %s=%s! You cannot implicitly leak global values through to your AddonNamespace. " .. 
+  error(format("Leaking Global %s=%s! You cannot implicitly leak global values through to your AddonNamespace. " ..
                "If you want to export a value for other addons to import, use 'export(name, value)'. " ..
                "If you want to expose a value to the global WoW scope, use 'expose(name, value)'",
                tostring(key),
@@ -44,11 +44,13 @@ end
 -- The execution environment of the file will be modified to use AddonToolkit
 -- to be able to take advantage of AddonToolkits feature set and stdlib
 -- Expected Usage (first line of all files): local name, MyAddon = AddonToolkit.AddOn(...)
-function AddonToolkit.AddOn(name, addon_table)
+function AddonToolkit.AddOn(name, addon_table, dont_isolate)
   if not addon_table.__namespace then
     name, addon_table = create_addon_namespace(name, addon_table, getfenv(2))
   end
-  setfenv(2, addon_table.__namespace)
+  if not dont_isolate then
+    setfenv(2, addon_table.__namespace)
+  end
   return name, addon_table
 end
 
@@ -57,22 +59,25 @@ end
 -- This is _basically_ the same as being a separate addon, except names are
 -- scoped to within the addon, so a module "logging" could exist for addon
 -- "A" and addon "B"
--- A module is quite literally an addon just named "addon_name.module_name", 
+-- A module is quite literally an addon just named "addon_name.module_name",
 -- and can be imported as such
-function AddonToolkit.Module(name)
+function AddonToolkit.Module(name, dont_isolate)
   local addon_namespace = getfenv(2) -- Get addon namespace from the caller
   if not addon_namespace.__name then
     error("Cannot directly create a module. Instead, you must first create/load an AddonToolkit AddOn")
   end
 
   local module_name = format("%s.%s", addon_namespace.__name, name)
-  if addons[module_name] then
-    setfenv(2, addons[module_name].__namespace)
-    return module_name, addons[module_name]
+  local module_table = addons[module_name]
+
+  if not module_table then
+    local _, module_table = create_addon_namespace(module_name, {})
   end
 
-  local _, module_table = create_addon_namespace(module_name, {})
-  setfenv(2, module_table.__namespace)
+  if not dont_isolate then
+    setfenv(2, addons[module_name].__namespace)
+  end
+
   return module_name, module_table
 end
 
@@ -104,14 +109,21 @@ function AddonToolkit.import(name, from_addon)
     return original_globals[name]
   end
   from_addon = type(from_addon) == "string" and AddonToolkit.get_addon(from_addon) or from_addon
-  return from_addon.__namespace[name]
+  return from_addon[name] or from_addon.__namespace[name]
 end
 
 
 -- Export a value to the AddonNamespace. This _must_ be an explicit action
 -- and implicit "global" setting is disallowed
-function AddonToolkit.export(as, value)
+function AddonToolkit.export(as, value, to)
   local addon_namespace = getfenv(2) -- Get namespace of caller :)
+  if not addon_namespace.__addon and not to then
+    error("Cannot export a value in an unisolated namespace without an explicit target")
+  end
+
+  if not addon_namespace.__addon then
+    addon_namespace = to.__namespace
+  end
   return rawset(addon_namespace, as, value)
 end
 
@@ -156,5 +168,5 @@ AddonToolkit.get_module = AddonToolkit.get_addon
 
 
 -- Now we can init AddonToolkit!
-AddonToolkit.AddOn(AddonToolkitName, AddonToolkit)
-expose("AddonToolkit", AddonToolkit)
+AddonToolkit.AddOn(AddonToolkitName, AddonToolkit, false)
+AddonToolkit.expose("AddonToolkit", AddonToolkit)
