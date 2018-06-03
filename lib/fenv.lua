@@ -71,7 +71,8 @@ function AddonToolkit.Module(name, dont_isolate)
   local module_table = addons[module_name]
 
   if not module_table then
-    local _, module_table = create_addon_namespace(module_name, {})
+    local _, t = create_addon_namespace(module_name, {})
+    module_table = t
   end
 
   if not dont_isolate then
@@ -148,12 +149,6 @@ end
 function AddonToolkit.unisolated(func, ...)
   local addon_namespace = getfenv(2)
   return run_as_env(addon_namespace.__prior_env, func, ...)
-end
-
-
--- Run a function in an addon's namespace
-function AddonToolkit.run_as_addon(addon, func, ...)
-  return run_as_env(addon.__namespace, func, ...)
 end
 
 

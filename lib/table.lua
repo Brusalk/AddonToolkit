@@ -32,4 +32,3 @@
 --   end
 --   error("Invalid usage. Usage: any(object, [predicate])")
 -- end
-
