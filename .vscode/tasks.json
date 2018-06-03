@@ -6,7 +6,7 @@
     {
       "label": "busted",
       "type": "shell",
-      "command": "bash -c \"LUA_PATH='./lib/?.lua' busted\"",
+      "command": "busted",
       "group": {
         "kind": "build",
         "isDefault": true
