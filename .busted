@@ -1,4 +1,7 @@
 return {
+  _all = {
+    coverage = true
+  },
   default = {
     verbose = true,
     lpath = "./src/?.lua;./src/?/?.lua;./src/?/init.lua;./lib/?.lua;./lib/?/?.lua;./lib/?/init.lua;./spec/?.lua"
