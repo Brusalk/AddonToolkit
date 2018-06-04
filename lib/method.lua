@@ -115,12 +115,4 @@ local function method(args)
   return setmetatable(function_table, function_metatable)
 end
 
-local function varargs(...)
-  return {
-    __varargs = true,
-    ...
-  }
-end
-
-
 export("method", method)
