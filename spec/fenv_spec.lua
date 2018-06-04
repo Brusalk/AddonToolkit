@@ -1,6 +1,5 @@
 helpers = require('helpers')
 
-
 insulate("Two Addons loaded with AddonToolkit", function()
   helpers.addon_loadfile("AddonToolkit", 'lib/fenv.lua')
 

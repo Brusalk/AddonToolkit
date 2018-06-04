@@ -6,7 +6,11 @@ local helpers = {}
 -- lua file/context. Thus, we do that here
 local addons = {}
 function helpers.addon_loadfile(addon_name, filepath)
-  local addon_table = addons[addon_name] or {}
+  if not addons[addon_name] then
+    addons[addon_name] = {}
+  end
+  local addon_table = addons[addon_name]
+  print("addon_loadfile", addon_name, filepath, addon_table)
   file_loader = assert(loadfile(filepath))
   return file_loader(addon_name, addon_table)
 end
