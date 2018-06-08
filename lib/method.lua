@@ -1,7 +1,7 @@
 local _, AddonToolkit = AddonToolkit.AddOn(...)
 local _, Method = AddonToolkit.Module("Method")
 
-local format = import("format")
+local format = import("string").format
 local ipairs = import("ipairs")
 local table = import("table")
 local pairs = import("pairs")
@@ -50,24 +50,29 @@ end
 local function parse_args(function_table, args)
   args = args or {}
   local missing_required_args = {}
+  -- FinalArgs consists of all required and default arguments.
+  local final_args = {}
   for _, required_arg in ipairs(function_table.required_arguments) do
     if args[required_arg] == nil then
       table.insert(missing_required_args, required_arg)
+    else
+      final_args[required_arg] = args[required_arg]
     end
   end
   if next(missing_required_args) then
     error(usage_error_message(function_table, args, missing_required_args), 2)
   end
 
-  local final_args = shallow_copy(args)
   for arg, default in pairs(function_table.default_arguments) do
     if args[arg] == nil then
       final_args[arg] = default
+    else
+      final_args[arg] = args[arg]
     end
   end
 
   local varargs = {}
-  for _, v in ipairs(final_args) do
+  for _, v in ipairs(args) do
     table.insert(varargs, v)
   end
 
@@ -105,7 +110,6 @@ local function_metatable = {
 local function method(args)
   if not args.name or not args.impl then error("Must specify function name and impl") end
   local function_table = {
-    self = args.self or false,
     name = args.name,
     required_arguments = args.required_arguments or {},
     default_arguments = args.default_arguments or {},
