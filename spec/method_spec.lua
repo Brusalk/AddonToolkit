@@ -1,4 +1,4 @@
-helpers = require('helpers')
+local helpers = require('helpers')
 
 local function loadfiles()
   helpers.addon_loadfile("AddonToolkit", 'lib/fenv.lua')

@@ -1,16 +1,16 @@
-helpers = require('helpers')
+local helpers = require('helpers')
 
 insulate("Two Addons loaded with AddonToolkit", function()
   helpers.addon_loadfile("AddonToolkit", 'lib/fenv.lua')
 
   insulate("FirstAddon", function()
-    local _, FirstAddon = AddonToolkit.AddOn("FirstAddon", {})
+    AddonToolkit.AddOn("FirstAddon", {})
   end)
 
   insulate("SecondAddon", function()
     it("fails when trying to overload the FirstAddon", function()
       assert.has.errors(function()
-        local _, SecondAddon = AddonToolkit.AddOn("FirstAddon", {})
+        AddonToolkit.AddOn("FirstAddon", {})
       end)
     end)
   end)
