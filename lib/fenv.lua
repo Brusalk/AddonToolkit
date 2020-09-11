@@ -1,4 +1,4 @@
-local AddonToolkitName, AddonToolkit = ...
+local AddonToolkitName, AddonToolkitModule = ...
 
 
 -- AddonToolkit
@@ -16,9 +16,10 @@ end
 
 
 function AddonNamespaceMetatable:__newindex(key, value)
-  error(format("Leaking Global %s=%s! You cannot implicitly leak global values through to your AddonNamespace. " ..
+  error(format("%s Leaking Global %s=%s! You cannot implicitly leak global values through to your AddonNamespace. " ..
                "If you want to export a value for other addons to import, use 'export(name, value)'. " ..
                "If you want to expose a value to the global WoW scope, use 'expose(name, value)'",
+               tostring(self),
                tostring(key),
                tostring(value)
               ))
@@ -30,7 +31,7 @@ local function create_addon_namespace(name, addon_table, prior_env)
     error(format("Name %q already defined as an Addon using AddonToolkit", name))
   end
   local addon_namespace = setmetatable({}, AddonNamespaceMetatable)
-  AddonToolkit.mixin(addon_namespace, AddonToolkit)
+  AddonToolkitModule.mixin(addon_namespace, AddonToolkitModule)
   rawset(addon_namespace, "__name", name)
   rawset(addon_namespace, "__addon", addon_table)
   rawset(addon_namespace, "__prior_env", prior_env)
@@ -44,7 +45,7 @@ end
 -- The execution environment of the file will be modified to use AddonToolkit
 -- to be able to take advantage of AddonToolkits feature set and stdlib
 -- Expected Usage (first line of all files): local name, MyAddon = AddonToolkit.AddOn(...)
-function AddonToolkit.AddOn(name, addon_table, dont_isolate)
+function AddonToolkitModule.AddOn(name, addon_table, dont_isolate)
   if not addon_table.__namespace then
     name, addon_table = create_addon_namespace(name, addon_table, getfenv(2))
   end
@@ -61,7 +62,7 @@ end
 -- "A" and addon "B"
 -- A module is quite literally an addon just named "addon_name.module_name",
 -- and can be imported as such
-function AddonToolkit.Module(name, dont_isolate)
+function AddonToolkitModule.Module(name, dont_isolate)
   local addon_namespace = getfenv(2) -- Get addon namespace from the caller
   if not addon_namespace.__name then
     error("Cannot directly create a module. Instead, you must first create/load an AddonToolkit AddOn")
@@ -89,7 +90,7 @@ end
 local function starts_with(str, with)
   return string.sub(str, 1, string.len(with)) == with
 end
-function AddonToolkit.mixin(obj, ...)
+function AddonToolkitModule.mixin(obj, ...)
   for _, mixin in ipairs({...}) do -- Technically misses nils, but w/e
     for key, value in pairs(mixin) do
       if not starts_with(key, "__") then -- Don't copy private members
@@ -105,18 +106,18 @@ end
 -- If AddonNamespace is a string, import from the Addon/Module named so
 -- If AddonNamespace is a table, import from it directly.
 -- If no AddonNamespace is given, imports from WoW Global scope
-function AddonToolkit.import(name, from_addon)
+function AddonToolkitModule.import(name, from_addon)
   if not from_addon then
     return original_globals[name]
   end
-  from_addon = type(from_addon) == "string" and AddonToolkit.get_addon(from_addon) or from_addon
+  from_addon = type(from_addon) == "string" and AddonToolkitModule.get_addon(from_addon) or from_addon
   return from_addon[name] or from_addon.__namespace[name]
 end
 
 
 -- Export a value to the AddonNamespace. This _must_ be an explicit action
 -- and implicit "global" setting is disallowed
-function AddonToolkit.export(as, value, to)
+function AddonToolkitModule.export(as, value, to)
   local addon_namespace = getfenv(2) -- Get namespace of caller :)
   if not addon_namespace.__addon and not to then
     error("Cannot export a value in an unisolated namespace without an explicit target")
@@ -129,7 +130,7 @@ function AddonToolkit.export(as, value, to)
 end
 
 -- Expose a value from the AddonNamespace to the global WoW namespace
-function AddonToolkit.expose(as, value)
+function AddonToolkitModule.expose(as, value)
   original_globals[as] = value
   return value
 end
@@ -146,22 +147,23 @@ end
 
 
 -- Run a function unisolated. It'll run in the original global and fenv
-function AddonToolkit.unisolated(func, ...)
+function AddonToolkitModule.unisolated(func, ...)
   local addon_namespace = getfenv(2)
   return run_as_env(addon_namespace.__prior_env, func, ...)
 end
 
 
-function AddonToolkit.get_addon(name)
+function AddonToolkitModule.get_addon(name)
   if not addons[name] then
-    error(format("Addon/Module %q has not been defined yet. Check your load order and that libraries are properly loading", name))
+    error(format("Addon/Module %q has not been defined yet. " +
+                 "Check your load order and that libraries are properly loading", name))
   end
   return addons[name]
 end
 
-AddonToolkit.get_module = AddonToolkit.get_addon
+AddonToolkitModule.get_module = AddonToolkitModule.get_addon
 
 
 -- Now we can init AddonToolkit!
-AddonToolkit.AddOn(AddonToolkitName, AddonToolkit, false)
-AddonToolkit.expose("AddonToolkit", AddonToolkit)
+AddonToolkitModule.AddOn(AddonToolkitName, AddonToolkitModule, false)
+AddonToolkitModule.expose("AddonToolkit", AddonToolkitModule)

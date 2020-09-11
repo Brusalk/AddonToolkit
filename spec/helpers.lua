@@ -10,8 +10,8 @@ function helpers.addon_loadfile(addon_name, filepath)
     addons[addon_name] = {}
   end
   local addon_table = addons[addon_name]
-  print("addon_loadfile", addon_name, filepath, addon_table)
-  file_loader = assert(loadfile(filepath))
+  -- print("addon_loadfile", addon_name, filepath, addon_table)
+  local file_loader = assert(loadfile(filepath))
   return file_loader(addon_name, addon_table)
 end
 

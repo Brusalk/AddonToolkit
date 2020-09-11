@@ -1,4 +1,5 @@
-local _, AddonToolkit = AddonToolkit.AddOn(...)
+local _, AddonToolkitModule = ...
+local _, AddonToolkit = AddonToolkitModule.AddOn(...)
 local _, Method = AddonToolkit.Module("Method")
 
 local format = import("string").format
